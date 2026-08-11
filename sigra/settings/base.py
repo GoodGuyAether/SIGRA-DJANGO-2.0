@@ -77,6 +77,15 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+# Generation paths have one source of truth.  They can be overridden in the
+# environment without changing code or depending on the operating system.
+TEMPLATE_PATH = env.path(
+    "TEMPLATE_PATH",
+    default=BASE_DIR / "resoluciones" / "templates" / "template.docx",
+)
+OUTPUT_DIR = env.path("OUTPUT_DIR", default=MEDIA_ROOT / "salidas")
+LIBREOFFICE_TIMEOUT = env.int("LIBREOFFICE_TIMEOUT", default=30)
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
