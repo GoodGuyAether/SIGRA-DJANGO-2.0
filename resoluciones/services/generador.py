@@ -61,6 +61,9 @@ def generar_resolucion(
     tipo: str,
     materias: list[dict],
     resolucion_nro: str,
+    *,
+    batch_id: uuid.UUID | None = None,
+    output_dir: Path | None = None,
 ) -> Resolucion:
     """Persist one resolution, render its DOCX and best-effort generate its PDF."""
     if not materias:
@@ -77,7 +80,12 @@ def generar_resolucion(
     if len(materias_catalogo) != len(set(materia_ids)) or len(carreras_catalogo) != len(set(carrera_ids)):
         raise GeneracionResolucionError("Una materia o carrera de origen no existe.")
 
-    output_dir = Path(settings.OUTPUT_DIR) / timezone.localdate().strftime("%Y") / timezone.localdate().strftime("%m")
+    output_dir = output_dir or (
+        Path(settings.OUTPUT_DIR)
+        / timezone.localdate().strftime("%Y")
+        / timezone.localdate().strftime("%m")
+    )
+    output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     token = uuid.uuid4().hex
     docx_path = output_dir / f"resolucion-{token}.docx"
@@ -92,6 +100,7 @@ def generar_resolucion(
                 estado=EstadoResolucion.EN_PROCESO,
                 resolucion_nro=resolucion_nro,
                 fecha=timezone.localdate(),
+                batch_id=batch_id,
             )
             filas = []
             contexto_materias = []

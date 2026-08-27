@@ -35,3 +35,17 @@ el bucle `materias` para la tabla y los campos de compatibilidad de una fila:
 Los archivos se guardan bajo `media/salidas/<año>/<mes>/` por defecto. Se
 pueden configurar `TEMPLATE_PATH`, `OUTPUT_DIR`, `LIBREOFFICE_BIN` y
 `LIBREOFFICE_TIMEOUT` desde el entorno.
+
+## Carga masiva CSV
+
+La carga síncrona se realiza con `POST /batch/upload/` usando el campo
+multipart `file`. El procesador usa `csv.DictReader` (sin pandas), valida
+encoding UTF-8, encabezados, campos obligatorios, años y el límite de 1000
+filas, y reporta todos los errores antes de generar documentos. Las filas se
+agrupan por DNI en orden de primera aparición y cada grupo produce una única
+resolución persistida con su `batch_id`.
+
+Los endpoints complementarios son `GET /batch/<batch_id>/estado/`,
+`GET /batch/<batch_id>/descargar/` (ZIP de DOCX/PDF) y
+`GET /batch/template/` (CSV de ejemplo). Los documentos se almacenan en
+`media/salidas/batches/<batch_id>/`.

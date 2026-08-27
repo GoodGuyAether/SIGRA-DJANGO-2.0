@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     "core",
     "catalogos",
     "resoluciones",
+    "batch",
 ]
 
 MIDDLEWARE = [
@@ -85,6 +86,9 @@ TEMPLATE_PATH = env.path(
 )
 OUTPUT_DIR = env.path("OUTPUT_DIR", default=MEDIA_ROOT / "salidas")
 LIBREOFFICE_TIMEOUT = env.int("LIBREOFFICE_TIMEOUT", default=30)
+MAX_UPLOAD_SIZE = env.int("MAX_UPLOAD_SIZE", default=16 * 1024 * 1024)
+BATCH_MAX_ROWS = env.int("BATCH_MAX_ROWS", default=1000)
+DATA_UPLOAD_MAX_MEMORY_SIZE = MAX_UPLOAD_SIZE
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
