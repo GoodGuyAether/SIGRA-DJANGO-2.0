@@ -96,6 +96,7 @@ def plantilla_csv(request: HttpRequest):
             "año_cursado": "2024",
             "institucion": "Instituto de origen",
             "carrera_origen": "Analista de Sistemas",
+            "situacion": "Corresponde",
         }
     )
     response = FileResponse(

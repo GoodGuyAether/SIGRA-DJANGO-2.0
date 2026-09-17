@@ -13,7 +13,7 @@ from django.conf import settings
 
 from batch.models import EstadoLote, LoteCarga
 from catalogos.models import Alumno, CarreraOrigen, Materia, Tecnicatura
-from resoluciones.models import TipoResolucion
+from resoluciones.models import TipoResolucion, SituacionMateria
 from resoluciones.services.generador import GeneracionResolucionError, generar_resolucion
 
 logger = logging.getLogger(__name__)
@@ -29,6 +29,7 @@ COLUMNAS_OBLIGATORIAS = (
     "año_cursado",
     "institucion",
     "carrera_origen",
+    "situacion",
 )
 COLUMNAS_OPCIONALES = ("resolucion_nro", "observaciones")
 
@@ -74,6 +75,11 @@ def parsear_y_validar_csv(contenido: bytes, max_filas: int | None = None) -> lis
         except ValueError:
             errores.append({"fila": numero_fila, "error": "El año cursado debe ser un número entre 1900 y 3000."})
             continue
+        situacion = limpia["situacion"].strip().lower().replace(" ", "_")
+        if situacion not in SituacionMateria.values:
+            errores.append({"fila": numero_fila, "error": "La situacion debe ser Corresponde o No Corresponde."})
+            continue
+        limpia["situacion"] = situacion
         limpia["_fila"] = numero_fila
         filas.append(limpia)
 
@@ -134,6 +140,7 @@ def _materias_para_generador(grupo: list[dict]) -> list[dict]:
                 "equivalencia": fila["equivalencia"],
                 "anio_cursado": fila["año_cursado"],
                 "institucion": fila["institucion"],
+                "situacion": fila["situacion"].lower().replace(" ", "_"),
             }
         )
     return materias

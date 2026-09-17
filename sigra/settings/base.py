@@ -84,6 +84,9 @@ TEMPLATE_PATH = env.path(
     "TEMPLATE_PATH",
     default=BASE_DIR / "resoluciones" / "templates" / "template.docx",
 )
+TEMPLATE_OTORGADAS_PATH = env.path("TEMPLATE_OTORGADAS_PATH", default=BASE_DIR / "resoluciones" / "templates" / "template_otorgadas.docx")
+TEMPLATE_NO_OTORGADAS_PATH = env.path("TEMPLATE_NO_OTORGADAS_PATH", default=BASE_DIR / "resoluciones" / "templates" / "template_no_otorgadas.docx")
+TEMPLATE_MIXTA_PATH = env.path("TEMPLATE_MIXTA_PATH", default=BASE_DIR / "resoluciones" / "templates" / "template_mixta.docx")
 OUTPUT_DIR = env.path("OUTPUT_DIR", default=MEDIA_ROOT / "salidas")
 LIBREOFFICE_TIMEOUT = env.int("LIBREOFFICE_TIMEOUT", default=30)
 MAX_UPLOAD_SIZE = env.int("MAX_UPLOAD_SIZE", default=16 * 1024 * 1024)

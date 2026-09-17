@@ -16,9 +16,9 @@ class ProcesadorCSVTests(SimpleTestCase):
 
     def test_reporta_las_filas_invalidas_en_una_sola_pasada(self):
         contenido = (
-            "nombre,apellido,dni,materia,equivalencia,tecnicatura,res_ministerial,año_cursado,institucion,carrera_origen\n"
-            "Ana,Pérez,,Programación,Equivalencia,Tecnicatura,RM 1,2024,Instituto,Carrera\n"
-            "Beto,Gómez,2,Matemática,Equivalencia,Tecnicatura,RM 1,no-es-año,Instituto,Carrera\n"
+            "nombre,apellido,dni,materia,equivalencia,tecnicatura,res_ministerial,año_cursado,institucion,carrera_origen,situacion\n"
+            "Ana,Pérez,,Programación,Equivalencia,Tecnicatura,RM 1,2024,Instituto,Carrera,Corresponde\n"
+            "Beto,Gómez,2,Matemática,Equivalencia,Tecnicatura,RM 1,no-es-año,Instituto,Carrera,No Corresponde\n"
         ).encode()
         with self.assertRaises(CSVInvalidoError) as context:
             parsear_y_validar_csv(contenido)

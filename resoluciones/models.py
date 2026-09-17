@@ -17,6 +17,15 @@ class EstadoResolucion(models.TextChoices):
     ERROR = "error", "Error"
 
 
+class SituacionMateria(models.TextChoices):
+    CORRESPONDE = "corresponde", "Corresponde"
+    NO_CORRESPONDE = "no_corresponde", "No corresponde"
+
+
+# Backwards-compatible name used by the first implementation of Ticket 04.
+SituacionEquivalencia = SituacionMateria
+
+
 class Resolucion(models.Model):
     alumno = models.ForeignKey(Alumno, on_delete=models.PROTECT, related_name="resoluciones")
     tecnicatura = models.ForeignKey(Tecnicatura, on_delete=models.PROTECT, related_name="resoluciones")
@@ -46,6 +55,11 @@ class ResolucionMateria(models.Model):
     equivalencia = models.TextField()
     anio_cursado = models.PositiveSmallIntegerField()
     institucion = models.CharField(max_length=200)
+    situacion = models.CharField(
+        max_length=20,
+        choices=SituacionEquivalencia.choices,
+        default=SituacionEquivalencia.CORRESPONDE,
+    )
 
     class Meta:
         verbose_name = "materia de resolución"

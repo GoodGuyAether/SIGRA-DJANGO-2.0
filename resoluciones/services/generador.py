@@ -10,7 +10,7 @@ from django.utils import timezone
 from catalogos.models import Alumno, CarreraOrigen, Materia, Tecnicatura
 from core.services.pdf import convertir_a_pdf
 from core.textutils import nombre_en_titulo, texto_en_mayusculas
-from resoluciones.models import EstadoResolucion, Resolucion, ResolucionMateria, TipoResolucion
+from resoluciones.models import EstadoResolucion, Resolucion, ResolucionMateria, SituacionEquivalencia, TipoResolucion
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +30,9 @@ def _contexto_documento(alumno: Alumno, tecnicatura: Tecnicatura, tipo: str, mat
         "alumno_apellido": nombre_en_titulo(alumno.apellido),
         "alumno_nombre_completo": f"{nombre_en_titulo(alumno.nombre)} {nombre_en_titulo(alumno.apellido)}",
         "alumno_dni": alumno.dni,
+        "nombre": nombre_en_titulo(alumno.nombre),
+        "apellido": nombre_en_titulo(alumno.apellido),
+        "dni": alumno.dni,
         "tecnicatura": tecnicatura.nombre,
         "res_ministerial": tecnicatura.res_ministerial,
         "tipo": TipoResolucion(tipo).label,
@@ -45,6 +48,26 @@ def _contexto_documento(alumno: Alumno, tecnicatura: Tecnicatura, tipo: str, mat
         "carreras_origen_unicas": _valores_unicos(materias, "carrera_origen"),
         "instituciones_unicas": _valores_unicos(materias, "institucion"),
         "equivalencias_unicas": _valores_unicos(materias, "equivalencia"),
+        # Legacy template variable: keep it aligned with the Art. 1 list.
+        "equivalencias": ", ".join(
+            _valores_unicos([item for item in materias if item["situacion"] == SituacionEquivalencia.CORRESPONDE], "equivalencia")
+        ),
+        "equivalencias_corresponde": ", ".join(
+            _valores_unicos([item for item in materias if item["situacion"] == SituacionEquivalencia.CORRESPONDE], "equivalencia")
+        ),
+        "equivalencias_no_corresponde": ", ".join(
+            _valores_unicos([item for item in materias if item["situacion"] == SituacionEquivalencia.NO_CORRESPONDE], "equivalencia")
+        ),
+        "materias_unicas": ", ".join(_valores_unicos(materias, "materia")),
+        "materias_corresponde": [item for item in materias if item["situacion"] == SituacionEquivalencia.CORRESPONDE],
+        "materias_no_corresponde": [item for item in materias if item["situacion"] == SituacionEquivalencia.NO_CORRESPONDE],
+        "materias_corresponden": [item for item in materias if item["situacion"] == SituacionEquivalencia.CORRESPONDE],
+        "materias_no_corresponden": [item for item in materias if item["situacion"] == SituacionEquivalencia.NO_CORRESPONDE],
+        "hay_no_corresponde": any(item["situacion"] == SituacionEquivalencia.NO_CORRESPONDE for item in materias),
+        "hay_no_corresponden": any(item["situacion"] == SituacionEquivalencia.NO_CORRESPONDE for item in materias),
+        "no_corresponde_texto": ", ".join(
+            item["materia"] for item in materias if item["situacion"] == SituacionEquivalencia.NO_CORRESPONDE
+        ),
     }
 
 
@@ -53,6 +76,15 @@ def _nombre_relativo(path: Path) -> str:
         return path.relative_to(settings.MEDIA_ROOT).as_posix()
     except ValueError as error:
         raise GeneracionResolucionError("OUTPUT_DIR debe estar dentro de MEDIA_ROOT.") from error
+
+
+def _template_path(materias: list[dict]) -> Path:
+    situaciones = {item.get("situacion", SituacionEquivalencia.CORRESPONDE) for item in materias}
+    if situaciones == {SituacionEquivalencia.CORRESPONDE}:
+        return Path(getattr(settings, "TEMPLATE_OTORGADAS_PATH", settings.TEMPLATE_PATH))
+    if situaciones == {SituacionEquivalencia.NO_CORRESPONDE}:
+        return Path(getattr(settings, "TEMPLATE_NO_OTORGADAS_PATH", settings.TEMPLATE_PATH))
+    return Path(getattr(settings, "TEMPLATE_MIXTA_PATH", settings.TEMPLATE_PATH))
 
 
 def generar_resolucion(
@@ -70,8 +102,9 @@ def generar_resolucion(
         raise GeneracionResolucionError("La resolución debe incluir al menos una materia.")
     if tipo not in TipoResolucion.values:
         raise GeneracionResolucionError("El tipo de resolución no es válido.")
-    if not Path(settings.TEMPLATE_PATH).is_file():
-        raise GeneracionResolucionError(f"No existe la plantilla DOCX: {settings.TEMPLATE_PATH}")
+    template_path = _template_path(materias)
+    if not template_path.is_file():
+        raise GeneracionResolucionError(f"No existe la plantilla DOCX: {template_path}")
 
     materia_ids = [item["materia_id"] for item in materias]
     carrera_ids = [item["carrera_origen_id"] for item in materias]
@@ -115,6 +148,7 @@ def generar_resolucion(
                         equivalencia=item["equivalencia"],
                         anio_cursado=item["anio_cursado"],
                         institucion=item["institucion"],
+                        situacion=item.get("situacion", SituacionEquivalencia.CORRESPONDE),
                     )
                 )
                 contexto_materias.append(
@@ -124,6 +158,9 @@ def generar_resolucion(
                         "equivalencia": texto_en_mayusculas(item["equivalencia"]),
                         "anio_cursado": item["anio_cursado"],
                         "institucion": texto_en_mayusculas(item["institucion"]),
+                        "tecnicatura": texto_en_mayusculas(tecnicatura.nombre),
+                        "situacion": item.get("situacion", SituacionEquivalencia.CORRESPONDE),
+                        "situacion_label": "No corresponde" if item.get("situacion") == SituacionEquivalencia.NO_CORRESPONDE else "Corresponde",
                     }
                 )
             ResolucionMateria.objects.bulk_create(filas)
@@ -134,7 +171,7 @@ def generar_resolucion(
                 raise GeneracionResolucionError(
                     "docxtpl no está instalado. Instale las dependencias del proyecto."
                 ) from error
-            template = DocxTemplate(str(settings.TEMPLATE_PATH))
+            template = DocxTemplate(str(template_path))
             template.render(_contexto_documento(alumno, tecnicatura, tipo, contexto_materias, resolucion_nro))
             template.save(str(docx_path))
             if not docx_path.is_file():
@@ -154,4 +191,7 @@ def generar_resolucion(
         logger.exception("Falló la generación del DOCX; se revierte la resolución.")
         if isinstance(error, GeneracionResolucionError):
             raise
+        detalle = str(error).strip()
+        if detalle:
+            raise GeneracionResolucionError(f"No se pudo generar el documento. Causa: {detalle}") from error
         raise GeneracionResolucionError("No se pudo generar el documento de resolución.") from error

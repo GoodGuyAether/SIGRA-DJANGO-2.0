@@ -6,6 +6,7 @@ from .models import Resolucion, ResolucionMateria
 class ResolucionMateriaInline(admin.TabularInline):
     model = ResolucionMateria
     extra = 1
+    fields = ["materia", "carrera_origen", "equivalencia", "anio_cursado", "institucion", "situacion"]
 
 
 @admin.register(Resolucion)

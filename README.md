@@ -20,7 +20,8 @@ LibreOffice no está disponible, el DOCX con el header
       "carrera_origen_id": 1,
       "equivalencia": "Aprobada por equivalencia",
       "anio_cursado": 2024,
-      "institucion": "Instituto de origen"
+      "institucion": "Instituto de origen",
+      "situacion": "Corresponde"
     }
   ]
 }

@@ -1,0 +1,5 @@
+nombre,apellido,dni,materia,equivalencia,tecnicatura,res_ministerial,año_cursado,institucion,carrera_origen,situacion,resolucion_nro
+Juan,Perez,30111222,Matemática I,Análisis Matemático I,Tecnicatura en Sistemas,123/2024,2019,Universidad Nacional de X,Ingeniería en Sistemas,Corresponde,RA-001/2026
+Maria,Gomez,30333444,Física I,Física I,Tecnicatura en Sistemas,123/2024,2020,Universidad Nacional de Y,Ingeniería en Sistemas,Corresponde,RA-002/2026
+Maria,Gomez,30333444,Química I,Química General,Tecnicatura en Sistemas,123/2024,2020,Universidad Nacional de Y,Ingeniería en Sistemas,No Corresponde,RA-002/2026
+Maria,Gomez,30333444,Programación I,Algoritmos y Programación,Tecnicatura en Sistemas,123/2024,2020,Universidad Nacional de Y,Ingeniería en Sistemas,Corresponde,RA-002/2026

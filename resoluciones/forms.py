@@ -1,7 +1,7 @@
 from django import forms
 
 from catalogos.models import CarreraOrigen, Materia, Tecnicatura
-from resoluciones.models import TipoResolucion
+from resoluciones.models import SituacionEquivalencia, TipoResolucion
 
 
 class GenerarResolucionForm(forms.Form):
@@ -33,8 +33,12 @@ class GenerarResolucionForm(forms.Form):
                 equivalencia = str(item["equivalencia"]).strip()
                 anio_cursado = int(item["anio_cursado"])
                 institucion = str(item["institucion"]).strip()
+                situacion = str(item.get("situacion", SituacionEquivalencia.CORRESPONDE)).strip().lower().replace(" ", "_")
             except (KeyError, TypeError, ValueError):
                 errores.append(f"Materia {index}: datos incompletos o inválidos.")
+                continue
+            if situacion not in SituacionEquivalencia.values:
+                errores.append(f"Materia {index}: situación debe ser Corresponde o No corresponde.")
                 continue
             if not equivalencia or not institucion or not 1900 <= anio_cursado <= 3000:
                 errores.append(f"Materia {index}: equivalencia, institución y año son obligatorios.")
@@ -50,6 +54,7 @@ class GenerarResolucionForm(forms.Form):
                     "equivalencia": equivalencia,
                     "anio_cursado": anio_cursado,
                     "institucion": institucion,
+                    "situacion": situacion,
                 }
             )
         if errores:
